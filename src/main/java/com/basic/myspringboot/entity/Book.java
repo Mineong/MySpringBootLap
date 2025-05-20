@@ -32,11 +32,9 @@ public class Book {
 
     private LocalDate publishDate;
 
-    // ✅ BookDetail과 1:1 연관관계 (기존 유지)
     @OneToOne(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private BookDetail bookDetail;
 
-    // ✅ Publisher와 다대일 연관관계 (추가)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;

@@ -42,7 +42,6 @@ public class BookDetailController {
         return ResponseEntity.ok(bookService.getBooksByTitle(title));
     }
 
-    // ✅ 출판사 ID로 도서 조회 추가
     @GetMapping("/publisher/{publisherId}")
     public ResponseEntity<List<BookDTO.Response>> getBooksByPublisher(@PathVariable Long publisherId) {
         return ResponseEntity.ok(bookService.getBooksByPublisherId(publisherId));

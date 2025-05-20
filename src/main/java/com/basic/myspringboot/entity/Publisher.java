@@ -30,7 +30,6 @@ public class Publisher {
     @Column(length = 200)
     private String address;
 
-    // ✅ Book과 1:N 양방향 연관관계
     @OneToMany(mappedBy = "publisher", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Book> books = new ArrayList<>();
 }
