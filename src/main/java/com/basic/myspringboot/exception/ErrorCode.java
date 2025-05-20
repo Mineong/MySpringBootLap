@@ -1,28 +1,36 @@
 package com.basic.myspringboot.exception;
 
-import org.springframework.http.HttpStatus;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
 public enum ErrorCode {
-
-    ISBN_DUPLICATE("Book already exists with ISBN: %s", HttpStatus.CONFLICT),
-    BOOK_NOT_FOUND("Book not found with %s: %s", HttpStatus.NOT_FOUND),
-    INVALID_PUBLISH_DATE("Book has invalid publish date: %s", HttpStatus.BAD_REQUEST),
-    INVALID_PRICE("Book price must be positive or zero: %s", HttpStatus.BAD_REQUEST),
-    AUTHOR_NOT_FOUND("No books found for author: %s", HttpStatus.NOT_FOUND),
-    TITLE_NOT_FOUND("No books found for title: %s", HttpStatus.NOT_FOUND),
-
-    BOOK_DETAIL_NOT_FOUND("BookDetail not found with %s: %s", HttpStatus.NOT_FOUND),
-    INVALID_PAGE_COUNT("Page count must be a positive number: %s", HttpStatus.BAD_REQUEST),
-    PUBLISHER_REQUIRED("Publisher name is required", HttpStatus.BAD_REQUEST),
-    DESCRIPTION_TOO_SHORT("Description must be longer than %s characters", HttpStatus.BAD_REQUEST),
-
+    // Common errors - 공통으로 사용할 수 있는 일반적인 에러 코드
     RESOURCE_NOT_FOUND("%s not found with %s: %s", HttpStatus.NOT_FOUND),
     RESOURCE_DUPLICATE("%s already exists with %s: %s", HttpStatus.CONFLICT),
-    RESOURCE_ALREADY_EXISTS("%s already exists: %s", HttpStatus.CONFLICT);
+    RESOURCE_ALREADY_EXISTS("%s already exists: %s", HttpStatus.CONFLICT),
+
+    // Student specific errors - 학생 관련 특수한 경우
+    STUDENT_NUMBER_DUPLICATE("Student already exists with student number: %s", HttpStatus.CONFLICT),
+
+    // StudentDetail specific errors - 학생 상세정보 관련 특수한 경우
+    EMAIL_DUPLICATE("Student detail already exists with email: %s", HttpStatus.CONFLICT),
+    PHONE_NUMBER_DUPLICATE("Student detail already exists with phone number: %s", HttpStatus.CONFLICT),
+
+    // Book specific errors - 도서 관련 특수한 경우
+    ISBN_DUPLICATE("Book already exists with ISBN: %s", HttpStatus.CONFLICT),
+    // Publisher specific errors - 출판사 관련 특수한 경우
+    PUBLISHER_NAME_DUPLICATE("Publisher already exists with name: %s", HttpStatus.CONFLICT),
+    PUBLISHER_HAS_BOOKS("Cannot delete publisher with id: %s. It has %s books", HttpStatus.CONFLICT),
+
+    // Department specific errors - 학과 관련 특수한 경우
+    DEPARTMENT_CODE_DUPLICATE("Department already exists with code: %s", HttpStatus.CONFLICT),
+    DEPARTMENT_NAME_DUPLICATE("Department already exists with name: %s", HttpStatus.CONFLICT),
+    DEPARTMENT_HAS_STUDENTS("Cannot delete department with id: %s. It has %s students",
+            HttpStatus.CONFLICT);
+
 
     private final String messageTemplate;
     private final HttpStatus httpStatus;

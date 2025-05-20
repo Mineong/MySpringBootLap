@@ -1,6 +1,5 @@
 package com.basic.myspringboot.entity;
 
-import com.basic.myspringboot.entity.BookDetail;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,11 +7,11 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "books")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Getter
-@Setter
 public class Book {
 
     @Id
@@ -33,8 +32,12 @@ public class Book {
 
     private LocalDate publishDate;
 
-    @OneToOne(mappedBy = "book",
-            cascade = CascadeType.ALL,
-            fetch = FetchType.LAZY)
+    // ✅ BookDetail과 1:1 연관관계 (기존 유지)
+    @OneToOne(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private BookDetail bookDetail;
+
+    // ✅ Publisher와 다대일 연관관계 (추가)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "publisher_id")
+    private Publisher publisher;
 }

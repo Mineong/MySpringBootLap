@@ -1,18 +1,20 @@
+
 package com.basic.myspringboot.service;
 
 import com.basic.myspringboot.controller.dto.BookDTO;
 import com.basic.myspringboot.entity.Book;
 import com.basic.myspringboot.entity.BookDetail;
+import com.basic.myspringboot.entity.Publisher;
 import com.basic.myspringboot.exception.BusinessException;
 import com.basic.myspringboot.exception.ErrorCode;
 import com.basic.myspringboot.repository.BookDetailRepository;
 import com.basic.myspringboot.repository.BookRepository;
+import com.basic.myspringboot.repository.PublisherRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +23,7 @@ public class BookService {
 
     private final BookRepository bookRepository;
     private final BookDetailRepository bookDetailRepository;
+    private final PublisherRepository publisherRepository;
 
     public List<BookDTO.Response> getAllBooks() {
         return bookRepository.findAll()
@@ -30,7 +33,7 @@ public class BookService {
     }
 
     public BookDTO.Response getBookById(Long id) {
-        Book book = bookRepository.findByIdWithBookDetail(id)
+        Book book = bookRepository.findByIdWithAllDetails(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Book", "id", id));
         return BookDTO.Response.fromEntity(book);
     }
@@ -55,83 +58,83 @@ public class BookService {
                 .toList();
     }
 
+    public List<BookDTO.Response> getBooksByPublisherId(Long publisherId) {
+        return bookRepository.findByPublisherId(publisherId)
+                .stream()
+                .map(BookDTO.Response::fromEntity)
+                .toList();
+    }
+
     @Transactional
     public BookDTO.Response createBook(BookDTO.Request request) {
-        // Validate ISBN is not already in use
         if (bookRepository.existsByIsbn(request.getIsbn())) {
             throw new BusinessException(ErrorCode.ISBN_DUPLICATE, request.getIsbn());
         }
 
-        // Create book entity
+        Publisher publisher = publisherRepository.findById(request.getPublisherId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Publisher", "id", request.getPublisherId()));
+
         Book book = Book.builder()
                 .title(request.getTitle())
                 .author(request.getAuthor())
                 .isbn(request.getIsbn())
                 .price(request.getPrice())
                 .publishDate(request.getPublishDate())
+                .publisher(publisher)
                 .build();
 
-        // Create book detail if provided
-        if (request.getDetail() != null) {
+        if (request.getDetailRequest() != null) {
             BookDetail bookDetail = BookDetail.builder()
-                    .description(request.getDetail().getDescription())
-                    .language(request.getDetail().getLanguage())
-                    .pageCount(request.getDetail().getPageCount())
-                    .publisher(request.getDetail().getPublisher())
-                    .coverImageUrl(request.getDetail().getCoverImageUrl())
-                    .edition(request.getDetail().getEdition())
-                    //연관관계 저장
+                    .description(request.getDetailRequest().getDescription())
+                    .language(request.getDetailRequest().getLanguage())
+                    .pageCount(request.getDetailRequest().getPageCount())
+                    .publisher(request.getDetailRequest().getPublisher())
+                    .coverImageUrl(request.getDetailRequest().getCoverImageUrl())
+                    .edition(request.getDetailRequest().getEdition())
                     .book(book)
                     .build();
-            //연관관계 저장
             book.setBookDetail(bookDetail);
         }
 
-        // Save and return the book
         Book savedBook = bookRepository.save(book);
         return BookDTO.Response.fromEntity(savedBook);
     }
 
     @Transactional
     public BookDTO.Response updateBook(Long id, BookDTO.Request request) {
-        // Find the book
-        Book book = bookRepository.findById(id)
+        Book book = bookRepository.findByIdWithAllDetails(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Book", "id", id));
 
-        // Check if another book already has the ISBN
-        if (!book.getIsbn().equals(request.getIsbn()) &&
-                bookRepository.existsByIsbn(request.getIsbn())) {
+        if (!book.getIsbn().equals(request.getIsbn()) && bookRepository.existsByIsbn(request.getIsbn())) {
             throw new BusinessException(ErrorCode.ISBN_DUPLICATE, request.getIsbn());
         }
 
-        // Update book basic info
+        Publisher publisher = publisherRepository.findById(request.getPublisherId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Publisher", "id", request.getPublisherId()));
+        book.setPublisher(publisher);
+
         book.setTitle(request.getTitle());
         book.setAuthor(request.getAuthor());
         book.setIsbn(request.getIsbn());
         book.setPrice(request.getPrice());
         book.setPublishDate(request.getPublishDate());
 
-        // Update book detail if provided
-        if (request.getDetail() != null) {
+        if (request.getDetailRequest() != null) {
             BookDetail bookDetail = book.getBookDetail();
-
-            // Create new detail if not exists
             if (bookDetail == null) {
                 bookDetail = new BookDetail();
                 bookDetail.setBook(book);
                 book.setBookDetail(bookDetail);
             }
 
-            // Update detail fields
-            bookDetail.setDescription(request.getDetail().getDescription());
-            bookDetail.setLanguage(request.getDetail().getLanguage());
-            bookDetail.setPageCount(request.getDetail().getPageCount());
-            bookDetail.setPublisher(request.getDetail().getPublisher());
-            bookDetail.setCoverImageUrl(request.getDetail().getCoverImageUrl());
-            bookDetail.setEdition(request.getDetail().getEdition());
+            bookDetail.setDescription(request.getDetailRequest().getDescription());
+            bookDetail.setLanguage(request.getDetailRequest().getLanguage());
+            bookDetail.setPageCount(request.getDetailRequest().getPageCount());
+            bookDetail.setPublisher(request.getDetailRequest().getPublisher());
+            bookDetail.setCoverImageUrl(request.getDetailRequest().getCoverImageUrl());
+            bookDetail.setEdition(request.getDetailRequest().getEdition());
         }
 
-        // Save and return updated book
         Book updatedBook = bookRepository.save(book);
         return BookDTO.Response.fromEntity(updatedBook);
     }
